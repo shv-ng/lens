@@ -1,9 +1,15 @@
 import cv2
 import pytesseract
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def extract_text_from_screenshot(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        logger.error(f"Error reading image: {image_path}")
+        return ""
 
     h, w = img.shape[:2]
     if w < 1200:
@@ -18,10 +24,5 @@ def extract_text_from_screenshot(image_path):
 
     text = pytesseract.image_to_string(processed_img, config=custom_config)
 
+    logger.info(f"Extracted text from image: {text}")
     return text
-
-
-if __name__ == "__main__":
-    tweet_text = extract_text_from_screenshot("test.png")
-    print("--- Extracted Screenshot Text ---")
-    print(tweet_text)
