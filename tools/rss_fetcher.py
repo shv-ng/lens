@@ -3,13 +3,13 @@ import httpx
 import feedparser
 import logging
 from typing import List
-import enum
 import html2text
 
 logger = logging.getLogger(__name__)
 
 parser = html2text.HTML2Text()
-parser.ignore_links = False
+parser.ignore_links = True
+
 
 class RSSArticle(BaseModel):
     title: str
@@ -19,36 +19,8 @@ class RSSArticle(BaseModel):
     source_name: str
 
 
-class SourceType(enum.Enum):
-    GOOGLE_NEWS = "google_news"
-    REDDIT = "reddit"
-    HACKER_NEWS = "hacker_news"
-    BBC_NEWS = "bbc_news"
-    THE_HINDU = "the_hindu"
-    ANI = "ani"
-    INDIAN_EXPRESS = "indian_express"
-
-
-async def fetch_rss_feed(url: str, source_type: SourceType) -> List[RSSArticle]:
-    match source_type:
-        case SourceType.GOOGLE_NEWS:
-            return await fetch_google_news_feed(url)
-        case SourceType.REDDIT:
-            return await fetch_reddit_feed(url)
-        case SourceType.HACKER_NEWS:
-            return await fetch_hacker_news_feed(url)
-        case SourceType.BBC_NEWS:
-            return await fetch_bbc_news_feed(url)
-        case SourceType.THE_HINDU:
-            return await fetch_the_hindu_feed(url)
-        case SourceType.ANI:
-            return await fetch_ani_feed(url)
-        case SourceType.INDIAN_EXPRESS:
-            return await fetch_indian_express_feed(url)
-
-
-async def fetch_google_news_feed(url: str) -> List[RSSArticle]:
-    async with httpx.AsyncClient() as client:
+async def fetch_rss_feed(url: str) -> List[RSSArticle]:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         r = await client.get(url)
         if r.status_code != 200:
             logger.error(f"Error fetching Google News feed: {r.status_code}")
@@ -66,30 +38,41 @@ async def fetch_google_news_feed(url: str) -> List[RSSArticle]:
         ]
 
 
-async def fetch_reddit_feed(url: str) -> List[RSSArticle]: ...
-async def fetch_hacker_news_feed(url: str) -> List[RSSArticle]: ...
-async def fetch_bbc_news_feed(url: str) -> List[RSSArticle]: ...
-async def fetch_the_hindu_feed(url: str) -> List[RSSArticle]: ...
-async def fetch_ani_feed(url: str) -> List[RSSArticle]: ...
-async def fetch_indian_express_feed(url: str) -> List[RSSArticle]: ...
+async def fetch_reddit_feed(url: str) -> List[RSSArticle]:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        r = await client.get(url)
+        if r.status_code != 200:
+            logger.error(f"Error fetching Reddit feed: {r.status_code}")
+            return []
+        feed = feedparser.parse(r.text)
+        return [
+            RSSArticle(
+                title=entry.title,
+                link=entry.link,
+                description=parser.handle(entry.description),
+                publication_date=entry.published,
+                source_name="Reddit",
+            )
+            for entry in feed.entries
+        ]
 
 
 if __name__ == "__main__":
     import asyncio
-    import pprint
 
     data = asyncio.run(
         fetch_rss_feed(
-            "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en",
-            SourceType.GOOGLE_NEWS,
+            "https://reddit.com/r/programming/.rss",
         )
-    )[0]
-    print("title:",data.title)
-    print()
-    print("link:",data.link)
-    print()
-    print("description:",data.description)
-    print()
-    print("publication_date:",data.publication_date)
-    print()
-    print("source_name:",data.source_name)
+    )
+    if data:
+        data = data[0]
+        print("title:", data.title)
+        print()
+        print("link:", data.link)
+        print()
+        print("description:", data.description)
+        print()
+        print("publication_date:", data.publication_date)
+        print()
+        print("source_name:", data.source_name)
