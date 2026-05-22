@@ -31,7 +31,6 @@ def backfill_subreddit_embeddings():
                     SELECT subreddit, description 
                     FROM public.subreddits 
                     WHERE embedding IS NULL 
-                      AND description IS NOT NULL
                     LIMIT %s;
                 """,
                     (BATCH_SIZE,),
@@ -40,12 +39,13 @@ def backfill_subreddit_embeddings():
                 rows = cur.fetchall()
 
                 if not rows:
+                    logger.info("No more rows to process")
                     break
 
                 logger.info(f"Processing batch of {len(rows)} subreddits...")
 
                 subreddits = [row[0] for row in rows]
-                descriptions = [row[1] for row in rows]
+                descriptions = [row[1] if row[1] else row[0] for row in rows]
 
                 vectors = get_embeddings(descriptions)
 

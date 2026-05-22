@@ -716,7 +716,6 @@ dependencies = [
     { name = "pgvector" },
     { name = "psycopg2-binary" },
     { name = "python-dotenv" },
-    { name = "requests" },
 ]
 
 [package.metadata]
@@ -726,7 +725,6 @@ requires-dist = [
     { name = "pgvector", specifier = ">=0.4.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.12" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
-    { name = "requests", specifier = ">=2.34.2" },
 ]
 
 [[package]]

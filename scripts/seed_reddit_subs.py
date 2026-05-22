@@ -1,13 +1,16 @@
 import tempfile
-import requests
 import logging
 import csv
 import os
+import httpx
 import dotenv
 import psycopg2
 
 dotenv.load_dotenv()
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 conn_string = os.environ.get("POSTGRES_URL")
@@ -35,35 +38,36 @@ with tempfile.NamedTemporaryFile(
     writer = csv.writer(tmp_csv)
     writer.writerow(["Subreddit", "Description"])
 
-    while count_sub_seeded < limit:  # limit to 5000 subs only
-        url = f"{base_url}&after={after_token}" if after_token else base_url
+    with httpx.Client(headers=headers) as client:
+        while count_sub_seeded < limit:  # limit to 5000 subs only
+            url = f"{base_url}&after={after_token}" if after_token else base_url
 
-        r = requests.get(
-            url,
-            headers=headers,
-        )
-        if r.status_code == 200:
-            data = r.json()
-            children = data["data"]["children"]
-            if not children:
-                logger.info("No more children")
+            r = client.get(
+                url,
+                headers=headers,
+            )
+            if r.status_code == 200:
+                data = r.json()
+                children = data["data"]["children"]
+                if not children:
+                    logger.info("No more children")
+                    break
+
+                for sub in children:
+                    sub_name = sub["data"]["display_name_prefixed"]
+                    description = sub["data"]["description"]
+                    writer.writerow([sub_name, description])
+
+                count_sub_seeded += len(children)
+                logger.info(f"Seeded {count_sub_seeded} subs")
+
+                after_token = data["data"]["after"]
+                if not after_token:
+                    logger.info("No more after token")
+                    break
+            else:
+                logger.error(f"Error fetching data: {r.status_code}")
                 break
-
-            for sub in children:
-                sub_name = sub["data"]["display_name_prefixed"]
-                description = sub["data"]["description"]
-                writer.writerow([sub_name, description])
-
-            count_sub_seeded += len(children)
-            logger.info(f"Seeded {count_sub_seeded} subs")
-
-            after_token = data["data"]["after"]
-            if not after_token:
-                logger.info("No more after token")
-                break
-        else:
-            logger.error(f"Error fetching data: {r.status_code}")
-            break
 
     tmp_csv.flush()
 
