@@ -4,16 +4,20 @@ import logging
 import csv
 import os
 import dotenv
+import psycopg2
 
 dotenv.load_dotenv()
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-db_url = os.environ.get("POSTGRES_URL")
+conn_string = os.environ.get("POSTGRES_URL")
 
 count_sub_seeded = 0
+limit = 5000
 
-url = "https://www.reddit.com/subreddits/popular.json?limit=100"
+base_url = "https://www.reddit.com/subreddits/popular.json?limit=100"
+after_token = None
 
 headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -31,18 +35,53 @@ with tempfile.NamedTemporaryFile(mode="w+",suffix='.csv',delete=True,newline='')
     writer.writerow(["Subreddit", "Description"])
 
     while count_sub_seeded < 5000:  # limit to 5000 subs only
+        url = f"{base_url}&after={after_token}" if after_token else base_url
+
         r = requests.get(
-            url,
+            base_url,
             headers=headers,
         )
         if r.status_code == 200:
             data = r.json()
-            for sub in data["data"]["children"]:
+            children = data["data"]["children"]
+            if not children:
+                logger.info("No more children")
+                break
+
+            for sub in children:
                 sub_name = sub["data"]["display_name_prefixed"]
                 description = sub["data"]["description"]
                 writer.writerow([sub_name, description])
-        count_sub_seeded += 100
-        logger.info(f"Seeded {count_sub_seeded} subs")
+
+            count_sub_seeded += len(children)
+            logger.info(f"Seeded {count_sub_seeded} subs")
+
+            after_token = data["data"]["after"]
+            if not after_token:
+                logger.info("No more after token")
+                break
+        else:
+            logger.error(f"Error fetching data: {r.status_code}")
+            break
+
     tmp_csv.flush()
 
+    logger.info("Connecting to Postgres")
+
+    tmp_csv.seek(0)
+    
+    conn=None
+    try:
+        conn = psycopg2.connect(conn_string)
+        cur = conn.cursor()
+
+        cur.execute("CREATE TABLE IF NOT EXISTS subreddits (subreddit text, description text)")
+
+        cur.copy_from(tmp_csv, table="subreddits", columns=("subreddit", "description"))
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Error copying data to Postgres: {e}")
+    finally:
+        if conn:
+            conn.close()
 
