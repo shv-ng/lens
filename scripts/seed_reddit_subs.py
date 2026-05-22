@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 conn_string = os.environ.get("POSTGRES_URL")
 
 count_sub_seeded = 0
-limit = 5000
+limit = 100
 
 base_url = "https://www.reddit.com/subreddits/popular.json?limit=100"
 after_token = None
@@ -38,11 +38,11 @@ with tempfile.NamedTemporaryFile(
     writer = csv.writer(tmp_csv)
     writer.writerow(["Subreddit", "Description"])
 
-    while count_sub_seeded < 5000:  # limit to 5000 subs only
+    while count_sub_seeded < limit:  # limit to 5000 subs only
         url = f"{base_url}&after={after_token}" if after_token else base_url
 
         r = requests.get(
-            base_url,
+            url,
             headers=headers,
         )
         if r.status_code == 200:
@@ -79,18 +79,33 @@ with tempfile.NamedTemporaryFile(
         conn = psycopg2.connect(conn_string)
         cur = conn.cursor()
 
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS subreddits (subreddit text, description text)"
-        )
+        cur.execute("""
+            CREATE TEMP TABLE tmp_subreddits (
+                subreddit text,
+                description text
+            )
+        """)
 
         cur.copy_expert(
-            sql="COPY subreddits (subreddit, description) FROM STDIN WITH CSV HEADER",
+            sql="""
+                COPY tmp_subreddits (subreddit, description)
+                FROM STDIN WITH CSV HEADER
+            """,
             file=tmp_csv,
         )
 
+        cur.execute("""
+            INSERT INTO subreddits (subreddit, description)
+            SELECT subreddit, description
+            FROM tmp_subreddits
+            ON CONFLICT (subreddit)
+            DO NOTHING
+        """)
+
         conn.commit()
+
         logger.info(
-            "Successfully bulk inserted all rows cleanly into Postgres database!"
+            "Successfully bulk inserted non-duplicate rows into Postgres database!"
         )
     except Exception as e:
         logger.error(f"Error copying data to Postgres: {e}")

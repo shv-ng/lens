@@ -5,12 +5,13 @@ services:
       - "6379:6379"
   postgres:
     image: pgvector/pgvector:pg18-trixie
+    restart: always
     ports:
       - "5432:5432"
     env_file:
       - .env
     volumes:
-      - pgdata:/var/lib/postgresql  
+      - pgdata:/var/lib/postgresql
 
 volumes:
   pgdata:
