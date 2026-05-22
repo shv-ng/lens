@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 conn_string = os.environ.get("POSTGRES_URL")
 
 count_sub_seeded = 0
-limit = 100
+limit = 5000
 
 base_url = "https://www.reddit.com/subreddits/popular.json?limit=100"
 after_token = None
