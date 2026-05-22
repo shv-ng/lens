@@ -4,9 +4,12 @@ import feedparser
 import logging
 from typing import List
 import enum
+import html2text
 
 logger = logging.getLogger(__name__)
 
+parser = html2text.HTML2Text()
+parser.ignore_links = False
 
 class RSSArticle(BaseModel):
     title: str
@@ -45,6 +48,24 @@ async def fetch_rss_feed(url: str, source_type: SourceType) -> List[RSSArticle]:
 
 
 async def fetch_google_news_feed(url: str) -> List[RSSArticle]:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url)
+        if r.status_code != 200:
+            logger.error(f"Error fetching Google News feed: {r.status_code}")
+            return []
+        feed = feedparser.parse(r.text)
+        return [
+            RSSArticle(
+                title=entry.title,
+                link=entry.link,
+                description=parser.handle(entry.description),
+                publication_date=entry.published,
+                source_name="Google News",
+            )
+            for entry in feed.entries
+        ]
+
+
 async def fetch_reddit_feed(url: str) -> List[RSSArticle]: ...
 async def fetch_hacker_news_feed(url: str) -> List[RSSArticle]: ...
 async def fetch_bbc_news_feed(url: str) -> List[RSSArticle]: ...
@@ -54,9 +75,21 @@ async def fetch_indian_express_feed(url: str) -> List[RSSArticle]: ...
 
 
 if __name__ == "__main__":
-    import asyncio, pprint
+    import asyncio
+    import pprint
 
     data = asyncio.run(
-        fetch_rss_feed("https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en")
-    )
-    pprint.pprint(data[0])
+        fetch_rss_feed(
+            "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en",
+            SourceType.GOOGLE_NEWS,
+        )
+    )[0]
+    print("title:",data.title)
+    print()
+    print("link:",data.link)
+    print()
+    print("description:",data.description)
+    print()
+    print("publication_date:",data.publication_date)
+    print()
+    print("source_name:",data.source_name)
