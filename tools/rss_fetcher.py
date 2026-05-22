@@ -2,8 +2,10 @@ from pydantic import BaseModel
 import httpx
 import feedparser
 import logging
-from typing import List
+from typing import List, TypedDict
+import enum
 import html2text
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +13,8 @@ parser = html2text.HTML2Text()
 parser.ignore_links = True
 
 
-class RSSArticle(BaseModel):
+@dataclass
+class RSSArticle:
     title: str
     link: str
     description: str

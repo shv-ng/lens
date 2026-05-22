@@ -1,9 +1,10 @@
+from dataclasses import asdict
 import logging
 from urllib.parse import quote_plus
 
 from .state import LensState,get_initial_state
 from tools.cache import get_cached, set_cache
-from tools.rss_fetcher import fetch_rss_feed
+from tools.rss_fetcher import fetch_rss_feed,RSSArticle
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ async def google_news_agent(state: LensState) -> dict:
                     query,
                 )
 
-                articles = cached_articles
+                articles = [RSSArticle(**a) for a in cached_articles]
 
             else:
                 logger.info(
@@ -44,7 +45,7 @@ async def google_news_agent(state: LensState) -> dict:
 
                 await set_cache(
                     rss_url,
-                    articles,
+                    [asdict(a) for a in articles],
                 )
 
             for article in articles:
@@ -55,7 +56,7 @@ async def google_news_agent(state: LensState) -> dict:
 
                 seen_links.add(link)
 
-                all_articles.append(article.model_dump())
+                all_articles.append(asdict(article))
 
         logger.info(
             "Collected %s Google News articles",
