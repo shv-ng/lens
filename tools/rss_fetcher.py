@@ -1,3 +1,4 @@
+from attr import s
 import httpx
 import feedparser
 import logging
@@ -20,7 +21,7 @@ class RSSArticle:
     source_name: str
 
 
-async def fetch_rss_feed(url: str) -> List[RSSArticle]:
+async def fetch_rss_feed(url: str,source_name:str) -> List[RSSArticle]:
     async with httpx.AsyncClient(follow_redirects=True) as client:
         r = await client.get(url)
         if r.status_code != 200:
@@ -33,7 +34,7 @@ async def fetch_rss_feed(url: str) -> List[RSSArticle]:
                 link=entry.link,
                 description=parser.handle(entry.description),
                 publication_date=entry.published,
-                source_name="Google News",
+                source_name=source_name,
             )
             for entry in feed.entries
         ]
@@ -45,6 +46,7 @@ if __name__ == "__main__":
     data = asyncio.run(
         fetch_rss_feed(
             "https://reddit.com/r/programming/.rss",
+            source_name="reddit",
         )
     )
     if data:

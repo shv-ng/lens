@@ -1,14 +1,52 @@
 from dataclasses import asdict
 import logging
 from urllib.parse import quote_plus
+from typing import cast
 
 from .state import LensState, get_initial_state
 from tools.cache import get_cached, set_cache
 from tools.rss_fetcher import fetch_rss_feed, RSSArticle
+import asyncio
 
 logger = logging.getLogger(__name__)
 
-GOOGLE_NEWS_RSS = "https://news.google.com/rss/search?q={query} after:2026-01-01&hl=en-IN&gl=IN&ceid=IN:en"
+THE_HINDU_URLS = [
+    "https://www.thehindu.com/feeder/default.rss",
+    "https://www.thehindu.com/news/feeder/default.rss",
+    "https://www.thehindu.com/news/national/feeder/default.rss",
+    "https://www.thehindu.com/news/international/feeder/default.rss",
+    "https://www.thehindu.com/opinion/feeder/default.rss",
+    "https://www.thehindu.com/business/feeder/default.rss",
+    "https://www.thehindu.com/sport/feeder/default.rss",
+]
+
+
+async def fetch_all_feeds(urls, source):
+    results = await asyncio.gather(
+        *(fetch_rss_feed(url, source) for url in urls),
+        return_exceptions=True,
+    )
+
+    articles = []
+
+    for result in results:
+        if isinstance(result, Exception):
+            logger.error(f"RSS fetch err: {result}")
+            continue
+
+        articles.extend(cast(list[RSSArticle], result))
+
+    return articles
+
+
+async def get_all_feeds():
+    articles = []
+    results = await asyncio.gather(
+        *(
+            fetch_all_feeds(THE_HINDU_URLS, source="the_hindu")
+        ),
+        return_exceptions=True,
+    )
 
 
 async def google_news_agent(state: LensState) -> dict:
@@ -72,17 +110,6 @@ async def google_news_agent(state: LensState) -> dict:
             "google_articles": [],
             "error": [str(e)],
         }
-
-
-async def get_the_hindu_news():
-    urls = [
-        "http://thehindu.com/feeder/default.rss",
-    ]
-    articles = []
-    for url in urls:
-        rss = await fetch_rss_feed(url)
-        articles.extend(rss)
-    return articles
 
 
 if __name__ == "__main__":

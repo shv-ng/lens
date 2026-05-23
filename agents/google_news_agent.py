@@ -41,7 +41,7 @@ async def google_news_agent(state: LensState) -> dict:
                     query,
                 )
 
-                articles = await fetch_rss_feed(rss_url)
+                articles = await fetch_rss_feed(rss_url,"google_news")
 
                 await set_cache(
                     rss_url,
