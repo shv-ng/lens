@@ -1,9 +1,7 @@
-from pydantic import BaseModel
 import httpx
 import feedparser
 import logging
-from typing import List, TypedDict
-import enum
+from typing import List
 import html2text
 from dataclasses import dataclass
 
@@ -26,7 +24,7 @@ async def fetch_rss_feed(url: str) -> List[RSSArticle]:
     async with httpx.AsyncClient(follow_redirects=True) as client:
         r = await client.get(url)
         if r.status_code != 200:
-            logger.error(f"Error fetching Google News feed: {r.status_code}")
+            logger.error(f"Error fetching {url}  feed: {r.status_code}")
             return []
         feed = feedparser.parse(r.text)
         return [
@@ -36,25 +34,6 @@ async def fetch_rss_feed(url: str) -> List[RSSArticle]:
                 description=parser.handle(entry.description),
                 publication_date=entry.published,
                 source_name="Google News",
-            )
-            for entry in feed.entries
-        ]
-
-
-async def fetch_reddit_feed(url: str) -> List[RSSArticle]:
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        r = await client.get(url)
-        if r.status_code != 200:
-            logger.error(f"Error fetching Reddit feed: {r.status_code}")
-            return []
-        feed = feedparser.parse(r.text)
-        return [
-            RSSArticle(
-                title=entry.title,
-                link=entry.link,
-                description=parser.handle(entry.description),
-                publication_date=entry.published,
-                source_name="Reddit",
             )
             for entry in feed.entries
         ]

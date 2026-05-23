@@ -9,7 +9,7 @@ from tools.rss_fetcher import fetch_rss_feed,RSSArticle
 logger = logging.getLogger(__name__)
 
 GOOGLE_NEWS_RSS = (
-    "https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
+    "https://news.google.com/rss/search?q={query} after:2026-01-01&hl=en-IN&gl=IN&ceid=IN:en"
 )
 
 
