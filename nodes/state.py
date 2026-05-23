@@ -1,9 +1,8 @@
-from typing import TypedDict
-from typing import Annotated
 import operator
+from typing import Annotated, TypedDict
 
 
-class LensState(TypedDict):
+class LensState(TypedDict, total=False):
     # Input
     raw_input: str
     input_type: str  # text or image
@@ -40,7 +39,6 @@ def get_initial_state() -> LensState:
         "google_articles": [],
         "reddit_articles": [],
         "news_org_articles": [],
-        "hn_articles": [],
         "top_articles": [],
         "has_conflict": False,
         "conflicting_articles": [],
