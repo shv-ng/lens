@@ -1,8 +1,22 @@
+from typing import cast
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from .state import LensState
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class ConflictOutput(BaseModel):
+    has_conflict: bool
+    conflicting_indices: list[int]
+    reasoning: str
+
 
 SYSTEM_PROMPT = """
 You are a news synthesis and bias detection engine.
@@ -41,7 +55,7 @@ llm = ChatGroq(
     temperature=0,
 )
 
-structured_llm = llm.with_structured_output(QueriesOutput)
+structured_llm = llm.with_structured_output(ConflictOutput)
 
 prompt = ChatPromptTemplate.from_messages(
     [
@@ -68,15 +82,21 @@ async def conflict_detector_node(state: LensState) -> dict:
         for i, a in enumerate(articles)
     ]
 
-    result = await chain.ainvoke(
-        {
-            "articles": compact,
-        }
+    result = cast(
+        ConflictOutput,
+        await chain.ainvoke(
+            {
+                "articles": compact,
+            }
+        ),
     )
 
-    conflicting = [articles[i] for i in result.conflicting_indices if 0<=i<len(articles)]
+    conflicting = [
+        articles[i] for i in result.conflicting_indices if 0 <= i < len(articles)
+    ]
 
     return {
-        'has_conflict':result.
+        "has_conflict": result.has_conflict,
+        "conflicting_articles": conflicting,
+        "deep_dive_count": 0,
     }
-
