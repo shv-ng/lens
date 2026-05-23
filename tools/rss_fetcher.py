@@ -21,7 +21,7 @@ class RSSArticle:
     link: str
     description: str
     publication_date: str
-    source_name: str
+    source: str
 
 
 headers = {
@@ -32,7 +32,7 @@ headers = {
 }
 
 
-async def fetch_rss_feed(url: str, source_name: str) -> List[RSSArticle]:
+async def fetch_rss_feed(url: str, source: str) -> List[RSSArticle]:
     cached_articles = await get_cached(url)
 
     if cached_articles:
@@ -58,7 +58,7 @@ async def fetch_rss_feed(url: str, source_name: str) -> List[RSSArticle]:
                     "published",
                     getattr(entry, "updated", ""),
                 ),
-                source_name=source_name,
+                source=source,
             )
             for entry in feed.entries
         ]
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     data = asyncio.run(
         fetch_rss_feed(
             "https://reddit.com/r/programming/.rss",
-            source_name="reddit",
+            source="reddit",
         )
     )
     if data:
@@ -105,4 +105,4 @@ if __name__ == "__main__":
         print()
         print("publication_date:", data.publication_date)
         print()
-        print("source_name:", data.source_name)
+        print("source:", data.source)
