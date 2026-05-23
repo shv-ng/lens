@@ -1,5 +1,6 @@
-from db.postgres import Postgres
 import logging
+
+from db.postgres import Postgres
 
 db = Postgres()
 logger = logging.getLogger(__name__)
