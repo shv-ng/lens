@@ -4,8 +4,6 @@ from langchain_core.prompts import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
-from pydantic import BaseModel
-from langchain_groq import ChatGroq
 from .state import LensState
 import logging
 from llm.schemas.conflict import ConflictOutput
