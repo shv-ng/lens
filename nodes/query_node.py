@@ -1,26 +1,19 @@
-from pydantic import BaseModel
-import json
 from typing import cast
 import logging
 import dotenv
-from langchain_groq import ChatGroq
 from langchain_core.prompts import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
 )
 from llm.client import get_llm
-from .state import LensState, get_initial_state
-from llm.schemas.queries import QueriesOutput
+from .state import LensState
+from llm.schemas.query import QueriesOutput
 from llm.prompts.query import SYSTEM_PROMPT
 
 dotenv.load_dotenv()
 
 logger = logging.getLogger(__name__)
-
-
-class QueriesOutput(BaseModel):
-    queries: list[str]
 
 
 llm = get_llm(QueriesOutput)
@@ -65,6 +58,8 @@ async def query_extractor_node(state: LensState):
 
 if __name__ == "__main__":
     import asyncio
+    from .state import get_initial_state
+    import json
 
     init_state = get_initial_state()
     init_state["raw_input"] = "What is the best way to learn Python?"
