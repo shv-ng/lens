@@ -1,8 +1,10 @@
-from urllib.parse import quote_plus
 import logging
 from dataclasses import asdict
-from .state import LensState
+from urllib.parse import quote_plus
+
 from tools.rss_fetcher import fetch_rss_feed
+
+from .state import LensState
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,7 @@ async def google_news_node(state: LensState) -> dict:
 if __name__ == "__main__":
     import asyncio
     import json
+
     from .state import get_initial_state
 
     init_state = get_initial_state()
