@@ -9,7 +9,10 @@ from langchain_core.prompts import (
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
 )
+from llm.client import get_llm
 from .state import LensState, get_initial_state
+from llm.schemas.queries import QueriesOutput
+from llm.prompts.query import SYSTEM_PROMPT
 
 dotenv.load_dotenv()
 
@@ -20,12 +23,7 @@ class QueriesOutput(BaseModel):
     queries: list[str]
 
 
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    temperature=0,
-)
-
-structured_llm = llm.with_structured_output(QueriesOutput)
+llm = get_llm(QueriesOutput)
 
 prompt = ChatPromptTemplate.from_messages(
     [
@@ -34,7 +32,7 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-chain = prompt | structured_llm
+chain = prompt | llm
 
 
 async def query_extractor_node(state: LensState):
