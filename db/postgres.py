@@ -1,9 +1,8 @@
-import os
-import asyncpg
-import dotenv
 import logging
+import os
 
-dotenv.load_dotenv()
+import asyncpg
+
 logger = logging.getLogger(__name__)
 
 conn_string = os.environ.get("POSTGRES_URL")
@@ -36,7 +35,6 @@ class Postgres:
     @classmethod
     async def get_connection(cls):
         if cls.pool is None or cls.pool.is_closing():
-            logger.error("Postgres not Connected")
+            logger.error("Postgres not connected, connecting...")
             await cls.connect()
         return cls.pool
-
