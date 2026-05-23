@@ -1,9 +1,8 @@
 from dataclasses import asdict
 import logging
 
-from .state import LensState, get_initial_state
+from .state import LensState
 from tools.rss_fetcher import RSSArticle, fetch_all_feeds
-import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +101,7 @@ async def news_orgs_node(_state: LensState) -> dict:
 
 if __name__ == "__main__":
     import asyncio
+    from .state import get_initial_state
 
     init_state = get_initial_state()
 
