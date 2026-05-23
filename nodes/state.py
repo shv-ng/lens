@@ -8,10 +8,10 @@ class LensState(TypedDict):
     raw_input: str
     input_type: str  # text or image
 
-    # Query Agent
+    # Query Node
     queries: list[str]
 
-    # Fetch Agents (each writes its own)
+    # Fetch Nodes (each writes its own)
     google_articles: list[dict]
     reddit_articles: list[dict]
     news_org_articles: list[dict]

@@ -1,11 +1,8 @@
 from dataclasses import asdict
 import logging
-from urllib.parse import quote_plus
-from typing import cast
 
 from .state import LensState, get_initial_state
-from tools.cache import get_cached, set_cache
-from tools.rss_fetcher import fetch_rss_feed, RSSArticle
+from tools.rss_fetcher import RSSArticle, fetch_all_feeds
 import asyncio
 
 logger = logging.getLogger(__name__)
@@ -49,24 +46,6 @@ BBC_NEWS_URLS = [
 ]
 
 
-async def fetch_all_feeds(urls, source):
-    results = await asyncio.gather(
-        *(fetch_rss_feed(url, source) for url in urls),
-        return_exceptions=True,
-    )
-
-    articles = []
-
-    for result in results:
-        if isinstance(result, Exception):
-            logger.error(f"RSS fetch err: {result}")
-            continue
-
-        articles.extend(cast(list[RSSArticle], result))
-
-    return articles
-
-
 async def get_all_feeds():
     results = await asyncio.gather(
         fetch_all_feeds(THE_HINDU_URLS, source="the_hindu"),
@@ -78,27 +57,12 @@ async def get_all_feeds():
     return results
 
 
-async def news_orgs_agent(_state: LensState) -> dict:
+async def news_orgs_node(_state: LensState) -> dict:
     all_articles = []
     seen_links = set()
 
     try:
-        cache_key = "news_orgs_feeds"
-
-        cached_articles = await get_cached(cache_key)
-
-        if cached_articles:
-            logger.info("News orgs cache hit")
-
-            return {
-                "news_org_articles": cached_articles,
-            }
-
-        logger.info("Fetching news org feeds")
-
-        results: list[
-            list[RSSArticle] | BaseException
-        ] = await get_all_feeds()
+        results: list[list[RSSArticle] | BaseException] = await get_all_feeds()
 
         for result in results:
             if isinstance(result, BaseException):
@@ -123,17 +87,12 @@ async def news_orgs_agent(_state: LensState) -> dict:
             len(all_articles),
         )
 
-        await set_cache(
-            cache_key,
-            all_articles,
-        )
-
         return {
             "news_org_articles": all_articles,
         }
 
     except Exception as e:
-        logger.exception("News org agent failed")
+        logger.exception("News org node failed")
 
         return {
             "news_org_articles": [],
@@ -143,9 +102,8 @@ async def news_orgs_agent(_state: LensState) -> dict:
 
 if __name__ == "__main__":
     import asyncio
-    import json
 
     init_state = get_initial_state()
 
-    data = asyncio.run(news_orgs_agent(init_state))
+    data = asyncio.run(news_orgs_node(init_state))
     print(len(data["news_org_articles"]))

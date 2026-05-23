@@ -61,7 +61,7 @@ prompt = ChatPromptTemplate.from_messages(
 chain = prompt | structured_llm
 
 
-async def query_extractor_agent(state: LensState):
+async def query_extractor_node(state: LensState):
     raw_input = state["raw_input"]
 
     try:
@@ -81,7 +81,7 @@ async def query_extractor_agent(state: LensState):
         }
 
     except Exception as e:
-        logger.exception("Error in query_extractor_agent")
+        logger.exception("Error in query_extractor_node")
 
         return {
             "queries": [],
@@ -95,5 +95,5 @@ if __name__ == "__main__":
     init_state = get_initial_state()
     init_state["raw_input"] = "What is the best way to learn Python?"
 
-    data = asyncio.run(query_extractor_agent(init_state))
+    data = asyncio.run(query_extractor_node(init_state))
     print(json.dumps(data, indent=4))
