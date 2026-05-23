@@ -1,7 +1,6 @@
 from dataclasses import asdict
-from .state import LensState, get_initial_state
+from .state import LensState
 from tools.embedder import get_embeddings
-import asyncio
 import logging
 from db.queries.subreddits import get_subreddits
 from tools.rss_fetcher import fetch_all_feeds
@@ -56,6 +55,7 @@ async def reddit_node(state: LensState) -> dict:
 
 if __name__ == "__main__":
     import asyncio
+    from .state import get_initial_state
 
     init_state = get_initial_state()
     init_state["queries"] = ["What is the best way to learn Python?"]
