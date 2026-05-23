@@ -8,54 +8,14 @@ from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from .state import LensState
 import logging
+from llm.schemas.conflict import ConflictOutput
+from llm.prompts.conflict import SYSTEM_PROMPT
+from llm.client import get_llm
 
 logger = logging.getLogger(__name__)
 
 
-class ConflictOutput(BaseModel):
-    has_conflict: bool
-    conflicting_indices: list[int]
-    reasoning: str
-
-
-SYSTEM_PROMPT = """
-You are a news synthesis and bias detection engine.
-
-You receive a list of news articles, each with:
-- index
-- title
-- source name
-
-Your task:
-Detect whether multiple sources describe the same underlying event differently.
-
-Types of differences:
-1. Factual conflict
-   - contradictory claims about what happened, who did it, or outcomes
-2. Framing divergence
-   - same facts, but different emphasis, tone, or narrative angle
-   - common between Indian vs Western outlets or ideological slants
-3. No meaningful difference
-   - same story cluster, same framing
-
-Rules:
-- Focus only on semantic differences implied by titles and source names.
-- Do NOT assume external knowledge beyond what is implied.
-- Prefer conservative conflict detection (avoid false positives).
-- If uncertain, mark has_conflict = false.
-
-Output requirements:
-- has_conflict: true if any meaningful contradiction OR strong framing divergence exists
-- conflicting_indices: list of indices that contribute to the divergence
-- reasoning: short technical explanation (1–3 sentences max)
-    """
-
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    temperature=0,
-)
-
-structured_llm = llm.with_structured_output(ConflictOutput)
+llm = get_llm(ConflictOutput)
 
 prompt = ChatPromptTemplate.from_messages(
     [
@@ -64,7 +24,7 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-chain = prompt | structured_llm
+chain = prompt | llm
 
 
 async def conflict_detector_node(state: LensState) -> dict:
