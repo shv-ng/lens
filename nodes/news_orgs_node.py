@@ -1,8 +1,10 @@
-from dataclasses import asdict
+import asyncio
 import logging
+from dataclasses import asdict
+
+from tools.rss_fetcher import RSSArticle, fetch_all_feeds
 
 from .state import LensState
-from tools.rss_fetcher import RSSArticle, fetch_all_feeds
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +58,7 @@ async def get_all_feeds():
     return results
 
 
-async def news_orgs_node(_state: LensState) -> dict:
+async def news_orgs_node(state: LensState, **kwargs):
     all_articles = []
     seen_links = set()
 
@@ -100,7 +102,6 @@ async def news_orgs_node(_state: LensState) -> dict:
 
 
 if __name__ == "__main__":
-    import asyncio
     from .state import get_initial_state
 
     init_state = get_initial_state()
