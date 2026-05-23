@@ -1,4 +1,3 @@
-
 SYSTEM_PROMPT = """
 You are a news synthesis and bias detection engine.
 
