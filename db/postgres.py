@@ -35,8 +35,8 @@ class Postgres:
 
     @classmethod
     async def get_connection(cls):
-        if cls.pool is None:
-            logger.fatal("Postgres not Connected")
-            return 
+        if cls.pool is None or cls.pool.is_closing():
+            logger.error("Postgres not Connected")
+            await cls.connect()
         return cls.pool
 
