@@ -1,9 +1,10 @@
-import tempfile
-import logging
 import csv
+import logging
 import os
-import httpx
+import tempfile
+
 import dotenv
+import httpx
 import psycopg2
 
 dotenv.load_dotenv()

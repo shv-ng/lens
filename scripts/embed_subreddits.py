@@ -1,7 +1,9 @@
-import os
 import logging
-import psycopg2
+import os
+
 import dotenv
+import psycopg2
+
 from tools.embedder import get_embeddings
 
 dotenv.load_dotenv()

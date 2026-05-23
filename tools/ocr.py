@@ -1,11 +1,12 @@
+import logging
+
 import cv2
 import pytesseract
-import logging
 
 logger = logging.getLogger(__name__)
 
 
-def extract_text_from_screenshot(image_path):
+def extract_text_from_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if img is None:
         logger.error(f"Error reading image: {image_path}")

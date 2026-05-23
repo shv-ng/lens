@@ -1,5 +1,6 @@
-from db.redis import r
 import json
+
+from db.redis import r
 
 
 async def get_cached(key: str) -> dict | None:
@@ -9,5 +10,5 @@ async def get_cached(key: str) -> dict | None:
     return None
 
 
-async def set_cache(key: str, value, ttl: int = 3600):
+async def set_cache(key: str, value, ttl: int = 3600 * 24):
     await r.set(key, json.dumps(value), ex=ttl)
