@@ -21,8 +21,16 @@ class RSSArticle:
     source_name: str
 
 
-async def fetch_rss_feed(url: str,source_name:str) -> List[RSSArticle]:
-    async with httpx.AsyncClient(follow_redirects=True) as client:
+headers = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "max-age=0",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+}
+
+
+async def fetch_rss_feed(url: str, source_name: str) -> List[RSSArticle]:
+    async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
         r = await client.get(url)
         if r.status_code != 200:
             logger.error(f"Error fetching {url}  feed: {r.status_code}")

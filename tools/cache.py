@@ -10,4 +10,4 @@ async def get_cached(key: str) -> dict | None:
 
 
 async def set_cache(key: str, value, ttl: int = 3600):
-    r.set(key, json.dumps(value), ex=ttl)
+    await r.set(key, json.dumps(value), ex=ttl)

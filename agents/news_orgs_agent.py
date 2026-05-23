@@ -148,4 +148,4 @@ if __name__ == "__main__":
     init_state = get_initial_state()
 
     data = asyncio.run(news_orgs_agent(init_state))
-    print(json.dumps(data, indent=4))
+    print(len(data["news_org_articles"]))
