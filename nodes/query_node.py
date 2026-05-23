@@ -1,34 +1,30 @@
-from typing import cast
 import logging
-import dotenv
-from langchain_core.prompts import (
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    ChatPromptTemplate,
-)
-from llm.client import get_llm
-from .state import LensState
-from llm.schemas.query import QueriesOutput
-from llm.prompts.query import SYSTEM_PROMPT
+from typing import cast
 
-dotenv.load_dotenv()
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
+
+from llm.client import get_llm
+from llm.prompts.query import SYSTEM_PROMPT
+from llm.schemas.query import QueriesOutput
+
+from .state import LensState
 
 logger = logging.getLogger(__name__)
 
 
-llm = get_llm(QueriesOutput)
-
-prompt = ChatPromptTemplate.from_messages(
-    [
-        SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
-        HumanMessagePromptTemplate.from_template(""" {raw_input} """),
-    ]
-)
-
-chain = prompt | llm
-
-
 async def query_extractor_node(state: LensState):
+    llm = get_llm().with_structured_output(QueriesOutput)
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
+            HumanMessagePromptTemplate.from_template(""" {raw_input} """),
+        ]
+    )
+    chain = prompt | llm
     raw_input = state["raw_input"]
 
     try:
@@ -58,8 +54,9 @@ async def query_extractor_node(state: LensState):
 
 if __name__ == "__main__":
     import asyncio
-    from .state import get_initial_state
     import json
+
+    from .state import get_initial_state
 
     init_state = get_initial_state()
     init_state["raw_input"] = "What is the best way to learn Python?"
