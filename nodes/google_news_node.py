@@ -1,8 +1,7 @@
-from dataclasses import asdict
-import logging
 from urllib.parse import quote_plus
-
-from .state import LensState, get_initial_state
+import logging
+from dataclasses import asdict
+from .state import LensState
 from tools.rss_fetcher import fetch_rss_feed
 
 logger = logging.getLogger(__name__)
@@ -55,6 +54,7 @@ async def google_news_node(state: LensState) -> dict:
 if __name__ == "__main__":
     import asyncio
     import json
+    from .state import get_initial_state
 
     init_state = get_initial_state()
     init_state["queries"] = ["What is the best way to learn Python?"]
