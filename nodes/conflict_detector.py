@@ -1,3 +1,4 @@
+from langchain_groq import ChatGroq
 from .state import LensState
 import logging
 
@@ -35,6 +36,47 @@ Output requirements:
 - reasoning: short technical explanation (1–3 sentences max)
     """
 
+llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    temperature=0,
+)
+
+structured_llm = llm.with_structured_output(QueriesOutput)
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
+        HumanMessagePromptTemplate.from_template(""" {raw_input} """),
+    ]
+)
+
+chain = prompt | structured_llm
+
+
 async def conflict_detector_node(state: LensState) -> dict:
-    top_articles = state["top_articles"]
-    return {}
+    articles = state.get("top_articles", [])[:10]
+
+    if not articles:
+        return {
+            "has_conflict": False,
+            "conflicting_articles": [],
+            "deep_dive_count": 0,
+        }
+
+    compact = [
+        {"i": i, "title": a.get("title"), "source": a.get("source")}
+        for i, a in enumerate(articles)
+    ]
+
+    result = await chain.ainvoke(
+        {
+            "articles": compact,
+        }
+    )
+
+    conflicting = [articles[i] for i in result.conflicting_indices if 0<=i<len(articles)]
+
+    return {
+        'has_conflict':result.
+    }
+
