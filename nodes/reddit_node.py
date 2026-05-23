@@ -1,9 +1,11 @@
-from dataclasses import asdict
-from .state import LensState
-from tools.embedder import get_embeddings
 import logging
+from dataclasses import asdict
+
 from db.queries.subreddits import get_subreddits
+from tools.embedder import get_embeddings
 from tools.rss_fetcher import fetch_all_feeds
+
+from .state import LensState
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +57,7 @@ async def reddit_node(state: LensState) -> dict:
 
 if __name__ == "__main__":
     import asyncio
+
     from .state import get_initial_state
 
     init_state = get_initial_state()
