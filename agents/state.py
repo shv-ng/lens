@@ -15,7 +15,6 @@ class LensState(TypedDict):
     google_articles: list[dict]
     reddit_articles: list[dict]
     news_org_articles: list[dict]
-    hn_articles: list[dict]
 
     # Merge + Rerank
     top_articles: list[dict]

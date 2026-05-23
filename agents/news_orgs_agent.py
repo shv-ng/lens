@@ -20,6 +20,34 @@ THE_HINDU_URLS = [
     "https://www.thehindu.com/sport/feeder/default.rss",
 ]
 
+INDIAN_EXPRESS_URLS = [
+    "https://indianexpress.com/section/india/feed/",
+    "https://indianexpress.com/section/world/feed/",
+    "https://indianexpress.com/section/politics/feed/",
+    "https://indianexpress.com/section/business/feed/",
+    "https://indianexpress.com/section/explained/feed/",
+    "https://indianexpress.com/section/technology/feed/",
+    "https://indianexpress.com/section/health-wellness/feed/",
+]
+
+ANI_NEWS_URLS = [
+    "https://aninews.in/rss/feed/category/national.xml",
+    "https://aninews.in/rss/feed/category/world.xml",
+    "https://aninews.in/videos-rss-feed/videos/business/",
+    "https://aninews.in/rss/feed/category/health.xml",
+    "https://aninews.in/rss/feed/category/tech.xml",
+]
+
+BBC_NEWS_URLS = [
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://feeds.bbci.co.uk/news/world/asia/rss.xml",
+    "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",
+    "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
+    "https://feeds.bbci.co.uk/news/world/europe/rss.xml",
+    "https://feeds.bbci.co.uk/news/rss.xml",
+    "https://feeds.bbci.co.uk/news/technology/rss.xml",
+]
+
 
 async def fetch_all_feeds(urls, source):
     results = await asyncio.gather(
@@ -40,51 +68,47 @@ async def fetch_all_feeds(urls, source):
 
 
 async def get_all_feeds():
-    articles = []
     results = await asyncio.gather(
-        *(
-            fetch_all_feeds(THE_HINDU_URLS, source="the_hindu")
-        ),
+        fetch_all_feeds(THE_HINDU_URLS, source="the_hindu"),
+        fetch_all_feeds(INDIAN_EXPRESS_URLS, source="indian_express"),
+        fetch_all_feeds(ANI_NEWS_URLS, source="ani_news"),
+        fetch_all_feeds(BBC_NEWS_URLS, source="bbc_news"),
         return_exceptions=True,
     )
+    return results
 
 
-async def google_news_agent(state: LensState) -> dict:
-    queries = state["queries"]
-
+async def news_orgs_agent(_state: LensState) -> dict:
     all_articles = []
     seen_links = set()
 
     try:
-        for query in queries:
-            encoded_query = quote_plus(query)
+        cache_key = "news_orgs_feeds"
 
-            rss_url = GOOGLE_NEWS_RSS.format(query=encoded_query)
+        cached_articles = await get_cached(cache_key)
 
-            cached_articles = await get_cached(rss_url)
+        if cached_articles:
+            logger.info("News orgs cache hit")
 
-            if cached_articles:
-                logger.info(
-                    "Google News cache hit: %s",
-                    query,
+            return {
+                "news_org_articles": cached_articles,
+            }
+
+        logger.info("Fetching news org feeds")
+
+        results: list[
+            list[RSSArticle] | BaseException
+        ] = await get_all_feeds()
+
+        for result in results:
+            if isinstance(result, BaseException):
+                logger.error(
+                    "News org fetch failed: %s",
+                    result,
                 )
+                continue
 
-                articles = [RSSArticle(**a) for a in cached_articles]
-
-            else:
-                logger.info(
-                    "Fetching Google News: %s",
-                    query,
-                )
-
-                articles = await fetch_rss_feed(rss_url)
-
-                await set_cache(
-                    rss_url,
-                    [asdict(a) for a in articles],
-                )
-
-            for article in articles:
+            for article in result:
                 link = str(article.link)
 
                 if link in seen_links:
@@ -95,19 +119,24 @@ async def google_news_agent(state: LensState) -> dict:
                 all_articles.append(asdict(article))
 
         logger.info(
-            "Collected %s Google News articles",
+            "Collected %s news org articles",
             len(all_articles),
         )
 
+        await set_cache(
+            cache_key,
+            all_articles,
+        )
+
         return {
-            "google_articles": all_articles,
+            "news_org_articles": all_articles,
         }
 
     except Exception as e:
-        logger.exception("Google News agent failed")
+        logger.exception("News org agent failed")
 
         return {
-            "google_articles": [],
+            "news_org_articles": [],
             "error": [str(e)],
         }
 
@@ -117,7 +146,6 @@ if __name__ == "__main__":
     import json
 
     init_state = get_initial_state()
-    init_state["queries"] = ["What is the best way to learn Python?"]
 
-    data = asyncio.run(google_news_agent(init_state))
+    data = asyncio.run(news_orgs_agent(init_state))
     print(json.dumps(data, indent=4))
