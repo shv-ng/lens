@@ -31,7 +31,7 @@
 
 	const nodes = {
 		query: { x: 80, y: 100, label: 'Query' },
-		google_news: { x: 220, y: 50, label: 'Google' },
+		google_news: { x: 220, y: 50, label: 'Google News' },
 		news_orgs: { x: 220, y: 100, label: 'News Orgs' },
 		reddit: { x: 220, y: 150, label: 'Reddit' },
 		merge_rerank: { x: 360, y: 100, label: 'Merge' },
