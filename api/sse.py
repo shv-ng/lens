@@ -1,4 +1,5 @@
 import json
+import logging
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -10,6 +11,8 @@ from nodes.state import get_initial_state
 router = APIRouter()
 
 graph = build_graph()
+
+logger = logging.getLogger(__name__)
 
 
 class VerifyStreamRequest(BaseModel):
@@ -74,66 +77,73 @@ async def verify_stream(
     req: VerifyStreamRequest,
 ):
     async def event_generator():
-        state = get_initial_state()
+        try:
+            state = get_initial_state()
 
-        state["raw_input"] = req.raw_input
-        state["input_type"] = req.input_type
+            state["raw_input"] = req.raw_input
+            state["input_type"] = req.input_type
 
-        final_result = None
+            final_result = None
 
-        async for event in graph.astream_events(
-            state,
-            version="v2",
-        ):
-            if event.get("event") != "on_chain_end":
-                continue
+            async for event in graph.astream_events(
+                state,
+                version="v2",
+            ):
+                if event.get("event") != "on_chain_end":
+                    continue
 
-            name = event.get("name")
+                name = event.get("name")
 
-            if name == "LangGraph":
-                final_result = event.get("data", {}).get("output", {})
-                continue
+                if name == "LangGraph":
+                    final_result = event.get("data", {}).get("output", {})
+                    continue
 
-            if name not in {
-                "query",
-                "google_news",
-                "news_orgs",
-                "reddit",
-                "merge_rerank",
-                "conflict",
-                "deep_dive",
-                "verdict",
-            }:
-                continue
+                if name not in {
+                    "query",
+                    "google_news",
+                    "news_orgs",
+                    "reddit",
+                    "merge_rerank",
+                    "conflict",
+                    "deep_dive",
+                    "verdict",
+                }:
+                    continue
 
-            output = event.get("data", {}).get("output", {})
+                output = event.get("data", {}).get("output", {})
+
+                yield sse_event(
+                    "progress",
+                    {
+                        "node": name,
+                        "message": build_message(name, output),
+                    },
+                )
+
+            if final_result:
+                yield sse_event(
+                    "final",
+                    {
+                        "verdict_label": final_result.get("verdict_label"),
+                        "verdict_explanation": final_result.get("verdict_explanation"),
+                        "framing_notes": final_result.get("framing_notes"),
+                        "top_articles": final_result.get(
+                            "top_articles",
+                            [],
+                        ),
+                    },
+                )
 
             yield sse_event(
-                "progress",
-                {
-                    "node": name,
-                    "message": build_message(name, output),
-                },
+                "done",
+                {"ok": True},
             )
-
-        if final_result:
+        except Exception as e:
+            logger.exception("Error in event generator")
             yield sse_event(
-                "final",
-                {
-                    "verdict_label": final_result.get("verdict_label"),
-                    "verdict_explanation": final_result.get("verdict_explanation"),
-                    "framing_notes": final_result.get("framing_notes"),
-                    "top_articles": final_result.get(
-                        "top_articles",
-                        [],
-                    ),
-                },
+                "error",
+                {"error": str(e)},
             )
-
-        yield sse_event(
-            "done",
-            {"ok": True},
-        )
 
     return StreamingResponse(
         event_generator(),

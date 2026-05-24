@@ -2,7 +2,8 @@ import logging
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from api.routes import router
 from api.sse import router as sse_router
@@ -30,6 +31,22 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(
+    request: Request,
+    exc: Exception,
+):
+    logger.exception("Unhandled HTTP error")
+
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": str(exc),
+        },
+    )
+
 
 app.include_router(router)
 app.include_router(sse_router)
