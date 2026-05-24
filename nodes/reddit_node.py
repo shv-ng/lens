@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import asdict
 
@@ -16,7 +17,7 @@ async def reddit_node(state: LensState) -> dict:
     REDDIT_URLS.add("https://www.reddit.com/r/skeptic/.rss")
 
     for query in queries:
-        embeddings = get_embeddings([query])
+        embeddings = await asyncio.to_thread(get_embeddings, [query])
 
         subs = await get_subreddits(embeddings[0])
         if not subs:

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import math
 from datetime import datetime, timezone
@@ -63,11 +64,12 @@ async def merge_rerank_node(state: LensState) -> dict:
     if not deduped:
         return {"top_articles": []}
 
-    query_vec = get_embeddings([" ".join(queries)])[0]
+    query_vec_res = await asyncio.to_thread(get_embeddings, [" ".join(queries)])
+    query_vec = query_vec_res[0]
 
     texts = [f"{a.get('title', '')}\n{a.get('description', '')}" for a in deduped]
 
-    doc_vecs = get_embeddings(texts)
+    doc_vecs = await asyncio.to_thread(get_embeddings, texts)
 
     cos_scores = cosine_sim(query_vec, doc_vecs)
 

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -18,7 +19,7 @@ conn_string = os.environ.get("POSTGRES_URL")
 BATCH_SIZE = 256
 
 
-def backfill_subreddit_embeddings():
+async def backfill_subreddit_embeddings():
     with psycopg2.connect(conn_string) as conn:
         total_updated = 0
 
@@ -49,7 +50,7 @@ def backfill_subreddit_embeddings():
                 subreddits = [row[0] for row in rows]
                 descriptions = [row[1] if row[1] else row[0] for row in rows]
 
-                vectors = get_embeddings(descriptions)
+                vectors = await asyncio.to_thread(get_embeddings, descriptions)
 
                 logger.info("Updating database batch...")
                 for subreddit, vector in zip(subreddits, vectors):

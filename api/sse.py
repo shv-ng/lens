@@ -1,7 +1,8 @@
+import asyncio
 import json
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -75,6 +76,7 @@ def build_message(node: str, output: dict):
 @router.post("/verify/stream")
 async def verify_stream(
     req: VerifyStreamRequest,
+    request: Request,
 ):
     async def event_generator():
         try:
@@ -85,10 +87,33 @@ async def verify_stream(
 
             final_result = None
 
-            async for event in graph.astream_events(
+            graph_stream = graph.astream_events(
                 state,
                 version="v2",
-            ):
+            )
+
+            next_event_task = asyncio.create_task(anext(graph_stream))
+            while True:
+                if await request.is_disconnected():
+                    logger.info("Client disconnected, Aborting stream")
+                    break
+
+                done, _ = await asyncio.wait(
+                    [next_event_task],
+                    timeout=0.25,
+                )
+
+                if not done:
+                    continue
+
+                try:
+                    event = next_event_task.result()
+                except StopAsyncIteration:
+                    logger.info("No more events")
+                    break
+
+                next_event_task = asyncio.create_task(anext(graph_stream))
+
                 if event.get("event") != "on_chain_end":
                     continue
 
@@ -120,7 +145,7 @@ async def verify_stream(
                     },
                 )
 
-            if final_result:
+            if final_result and not await request.is_disconnected():
                 yield sse_event(
                     "final",
                     {
@@ -138,12 +163,21 @@ async def verify_stream(
                 "done",
                 {"ok": True},
             )
+        except asyncio.CancelledError:
+            logger.info("SSE cancelled")
+            raise
         except Exception as e:
             logger.exception("Error in event generator")
             yield sse_event(
                 "error",
                 {"error": str(e)},
             )
+        finally:
+            try:
+                await graph_stream.aclose()
+                logger.info("LangGraph stream iterator closed successfully.")
+            except Exception as e:
+                logger.debug(f"Error closing graph stream iterator: {e}")
 
     return StreamingResponse(
         event_generator(),
