@@ -8,7 +8,7 @@ from typing import AsyncGenerator, Optional
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
 
-# Importing your isolated dependencies
+from core.decorators import logit
 from nodes.graph import build_graph
 from nodes.state import get_initial_state
 from tools.ocr import extract_text_from_image
@@ -30,10 +30,12 @@ TRACKED_NODES = {
 }
 
 
+@logit
 def format_sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
+@logit
 def format_node_message(node: str, output: dict) -> str:
     def meta(key):
         return output.get(key, {})
@@ -61,6 +63,7 @@ def format_node_message(node: str, output: dict) -> str:
     return node
 
 
+@logit
 async def process_file_input(file_bytes: bytes, input_type: str) -> str:
     """Saves file bytes to disk and passes the path directly to your tool functions."""
     loop = asyncio.get_running_loop()
@@ -83,6 +86,12 @@ async def process_file_input(file_bytes: bytes, input_type: str) -> str:
                     detail=f"Could not extract any text from the provided {input_type} file.",
                 )
             return extracted_text.strip()
+        except Exception as e:
+            logger.exception("Error running tool pipeline")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Error running tool pipeline: {e}",
+            )
         finally:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
@@ -90,6 +99,7 @@ async def process_file_input(file_bytes: bytes, input_type: str) -> str:
     return await loop.run_in_executor(None, run_tool_pipeline)
 
 
+@logit
 async def stream_graph_events(
     raw_input: str, input_type: str, request: Request
 ) -> AsyncGenerator[str, None]:
@@ -166,6 +176,7 @@ async def stream_graph_events(
             logger.debug(f"Error closing graph stream iterator: {e}")
 
 
+@logit
 @router.post("/verify/stream")
 async def verify_stream(
     request: Request,

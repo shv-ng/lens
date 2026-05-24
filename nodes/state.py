@@ -1,6 +1,8 @@
 import operator
 from typing import Annotated, TypedDict
 
+from core.decorators import logit
+
 
 class LensState(TypedDict, total=False):
     # Input
@@ -31,6 +33,7 @@ class LensState(TypedDict, total=False):
     error: Annotated[list[str], operator.add]
 
 
+@logit
 def get_initial_state() -> LensState:
     return {
         "raw_input": "",

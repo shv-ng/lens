@@ -5,6 +5,7 @@ import os
 import dotenv
 import psycopg2
 
+from core.decorators import logit
 from tools.embedder import get_embeddings
 
 dotenv.load_dotenv()
@@ -13,12 +14,14 @@ dotenv.load_dotenv()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
 logger = logging.getLogger(__name__)
 
 conn_string = os.environ.get("POSTGRES_URL")
 BATCH_SIZE = 256
 
 
+@logit
 async def backfill_subreddit_embeddings():
     with psycopg2.connect(conn_string) as conn:
         total_updated = 0

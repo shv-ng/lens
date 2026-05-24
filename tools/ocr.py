@@ -3,11 +3,19 @@ import logging
 import cv2
 import pytesseract
 
+from core.decorators import logit
+
 logger = logging.getLogger(__name__)
 
 
+@logit
 def extract_text_from_image(image_path):
-    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    try:
+        img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    except Exception as e:
+        logger.exception(f"Error reading image: {image_path}, error: {e}")
+        return ""
+
     if img is None:
         logger.error(f"Error reading image: {image_path}")
         return ""
@@ -23,7 +31,11 @@ def extract_text_from_image(image_path):
 
     custom_config = r"--oem 3 --psm 6"
 
-    text = pytesseract.image_to_string(processed_img, config=custom_config)
+    try:
+        text = pytesseract.image_to_string(processed_img, config=custom_config)
+    except Exception as e:
+        logger.exception(f"Error extracting text from image: {image_path}, error: {e}")
+        return ""
 
     logger.info(f"Extracted text from image: {text}")
     return text

@@ -1,10 +1,13 @@
 import logging
 from typing import cast
 
-from langchain_core.prompts import (ChatPromptTemplate,
-                                    HumanMessagePromptTemplate,
-                                    SystemMessagePromptTemplate)
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
 
+from core.decorators import cached, logit
 from llm.client import get_llm
 from llm.prompts.query import SYSTEM_PROMPT
 from llm.schemas.query import QueriesOutput
@@ -14,8 +17,17 @@ from .state import LensState
 logger = logging.getLogger(__name__)
 
 
+@logit
+@cached()
 async def query_extractor_node(state: LensState):
-    llm = get_llm().with_structured_output(QueriesOutput)
+    try:
+        llm = get_llm().with_structured_output(QueriesOutput)
+    except Exception as e:
+        logger.exception(f"Error initializing LLM for query extractor node, {e}")
+        return {
+            "queries": [],
+            "error": [str(e)],
+        }
     prompt = ChatPromptTemplate.from_messages(
         [
             SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
@@ -30,7 +42,7 @@ async def query_extractor_node(state: LensState):
             "query_meta": {
                 "query_count": 0,
             },
-            "error": "No input provided",
+            "error": ["No input provided"],
         }
 
     try:
@@ -57,18 +69,5 @@ async def query_extractor_node(state: LensState):
 
         return {
             "queries": [],
-            "error": str(e),
+            "error": [str(e)],
         }
-
-
-if __name__ == "__main__":
-    import asyncio
-    import json
-
-    from .state import get_initial_state
-
-    init_state = get_initial_state()
-    init_state["raw_input"] = "What is the best way to learn Python?"
-
-    data = asyncio.run(query_extractor_node(init_state))
-    print(json.dumps(data, indent=4))

@@ -2,6 +2,7 @@ import asyncio
 import logging
 from dataclasses import asdict
 
+from core.decorators import cached, logit
 from tools.rss_fetcher import RSSArticle, fetch_all_feeds
 
 from .state import LensState
@@ -47,6 +48,7 @@ BBC_NEWS_URLS = [
 ]
 
 
+@logit
 async def get_all_feeds():
     results = await asyncio.gather(
         fetch_all_feeds(THE_HINDU_URLS, source="the_hindu"),
@@ -58,7 +60,9 @@ async def get_all_feeds():
     return results
 
 
-async def news_orgs_node(state: LensState, **kwargs):
+@logit
+@cached()
+async def news_orgs_node(state: LensState):
     all_articles = []
     seen_links = set()
 
@@ -102,12 +106,3 @@ async def news_orgs_node(state: LensState, **kwargs):
             "news_org_articles": [],
             "error": [str(e)],
         }
-
-
-if __name__ == "__main__":
-    from .state import get_initial_state
-
-    init_state = get_initial_state()
-
-    data = asyncio.run(news_orgs_node(init_state))
-    print(len(data["news_org_articles"]))

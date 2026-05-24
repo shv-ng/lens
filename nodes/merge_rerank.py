@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 
+from core.decorators import cached, logit
 from tools.embedder import get_embeddings
 
 from .state import LensState
@@ -12,6 +13,7 @@ from .state import LensState
 logger = logging.getLogger(__name__)
 
 
+@logit
 def parse_date(x):
     try:
         # RSS often RFC822; adjust if needed
@@ -22,6 +24,7 @@ def parse_date(x):
         return None
 
 
+@logit
 def recency_score(dt):
     if not dt:
         return 0.0
@@ -31,6 +34,7 @@ def recency_score(dt):
     return math.exp(-age_hours / 48)
 
 
+@logit
 def cosine_sim(q, D):
     q = np.array(q)
     D = np.array(D)
@@ -41,6 +45,8 @@ def cosine_sim(q, D):
     return D @ q
 
 
+@logit
+@cached()
 async def merge_rerank_node(state: LensState) -> dict:
     queries = state["queries"]
 
@@ -80,13 +86,13 @@ async def merge_rerank_node(state: LensState) -> dict:
 
         r = recency_score(dt)
 
-        score = 0.7 * float(c) + 0.3 * r
+        score = 0.5 * float(c) + 0.5 * r
 
         scored.append((score, a))
 
     scored.sort(reverse=True, key=lambda x: x[0])
 
-    top = [{**a, "score": s} for s, a in scored[:10]]
+    top = [{**a, "score": s} for s, a in scored[:20]]
 
     return {
         "top_articles": top,
@@ -95,40 +101,3 @@ async def merge_rerank_node(state: LensState) -> dict:
             "top_count": len(top),
         },
     }
-
-
-if __name__ == "__main__":
-    import asyncio
-    import json
-
-    from .google_news_node import google_news_node
-    from .news_orgs_node import news_orgs_node
-    from .query_node import query_extractor_node
-    from .reddit_node import reddit_node
-    from .state import get_initial_state
-
-    init_state = get_initial_state()
-    logger.info(f"Initial state: {init_state}")
-    init_state["raw_input"] = "Is the Indian government corrupt?"
-    logger.info(f"Raw input: {init_state['raw_input']}")
-
-    init_state["queries"] = asyncio.run(query_extractor_node(init_state))["queries"]
-    logger.info(f"Queries: {init_state['queries']}")
-
-    init_state["google_articles"] = asyncio.run(google_news_node(init_state))[
-        "google_articles"
-    ]
-    logger.info(f"Google articles: {init_state['google_articles']}")
-
-    init_state["news_org_articles"] = asyncio.run(news_orgs_node(init_state))[
-        "news_org_articles"
-    ]
-    logger.info(f"News org articles: {init_state['news_org_articles']}")
-
-    init_state["reddit_articles"] = asyncio.run(reddit_node(init_state))[
-        "reddit_articles"
-    ]
-    logger.info(f"Reddit articles: {init_state['reddit_articles']}")
-
-    data = asyncio.run(merge_rerank_node(init_state))
-    print(json.dumps(data, indent=4))

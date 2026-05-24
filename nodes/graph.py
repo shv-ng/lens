@@ -1,5 +1,7 @@
 from langgraph.graph import END, START, StateGraph
 
+from core.decorators import logit
+
 from .conflict_detector import conflict_detector_node
 from .deep_dive_node import deep_dive_node
 from .google_news_node import google_news_node
@@ -11,12 +13,14 @@ from .state import LensState
 from .verdict_node import verdict_node
 
 
+@logit
 def conflict_router(state: LensState):
     if state.get("has_conflict") and state.get("deep_dive_count", 0) < 2:
         return "deep_dive"
     return "verdict"
 
 
+@logit
 def build_graph():
     graph = StateGraph(LensState)
 
@@ -65,23 +69,3 @@ def build_graph():
     graph.add_edge("verdict", END)
 
     return graph.compile()
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    from .conflict_detector import conflict_detector_node
-    from .deep_dive_node import deep_dive_node
-    from .google_news_node import google_news_node
-    from .merge_rerank import merge_rerank_node
-    from .news_orgs_node import news_orgs_node
-    from .query_node import query_extractor_node
-    from .reddit_node import reddit_node
-    from .state import LensState, get_initial_state
-
-    init_state = get_initial_state()
-    init_state["raw_input"] = "Is the Indian government corrupt?"
-
-    graph = build_graph()
-    result = asyncio.run(graph.ainvoke(init_state))
-    print(result)

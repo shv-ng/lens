@@ -2,9 +2,12 @@ import logging
 
 import pymupdf
 
+from core.decorators import logit
+
 logger = logging.getLogger(__name__)
 
 
+@logit
 def extract_text_from_pdf(pdf_path):
     try:
         with pymupdf.open(pdf_path) as doc:

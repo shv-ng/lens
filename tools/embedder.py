@@ -1,11 +1,15 @@
 from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_core.documents import Document
 
+from core.decorators import cached, logit
+
 embedding_model = FastEmbedEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2", cache_dir="./models"
 )
 
 
+@logit
+@cached()
 def get_embeddings(documents: list[Document] | list[str]) -> list[list[float]]:
     if not documents:
         return []

@@ -2,6 +2,7 @@ import asyncio
 import logging
 from dataclasses import asdict
 
+from core.decorators import cached, logit
 from db.queries.subreddits import get_subreddits
 from tools.embedder import get_embeddings
 from tools.rss_fetcher import fetch_all_feeds
@@ -11,10 +12,11 @@ from .state import LensState
 logger = logging.getLogger(__name__)
 
 
+@logit
+@cached()
 async def reddit_node(state: LensState) -> dict:
     queries = state["queries"]
-    REDDIT_URLS = set()
-    REDDIT_URLS.add("https://www.reddit.com/r/skeptic/.rss")
+    REDDIT_URLS = {"https://www.reddit.com/r/skeptic/.rss"}
 
     for query in queries:
         embeddings = await asyncio.to_thread(get_embeddings, [query])
@@ -58,16 +60,3 @@ async def reddit_node(state: LensState) -> dict:
             "reddit_articles": [],
             "error": [str(e)],
         }
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    from .state import get_initial_state
-
-    init_state = get_initial_state()
-    init_state["queries"] = ["What is the best way to learn Python?"]
-
-    data = asyncio.run(reddit_node(init_state))
-    print(len(data["reddit_articles"]))
-    print(data["reddit_articles"][0])

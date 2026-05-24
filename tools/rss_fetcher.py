@@ -1,13 +1,15 @@
 import asyncio
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import List, cast
 
 import feedparser
 import html2text
 import httpx
 
-from tools.cache import get_cached, set_cache
+from core.decorators import logit
+from core.decorators.cache import build_cache_key, get_cached, set_cache
+from core.decorators.retry import retry
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +34,20 @@ headers = {
 }
 
 
+@logit
+@retry()
 async def fetch_rss_feed(url: str, source: str) -> List[RSSArticle]:
-    cached_articles = await get_cached(url)
-
-    if cached_articles:
-        logger.info(f"RSS feed cache hit: {url}")
-        return [RSSArticle(**article) for article in cached_articles]
-
-    async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
+    cached_result = await get_cached(
+        build_cache_key("fetch_rss_feed", (url, source), {})
+    )
+    if cached_result:
+        return [
+            RSSArticle(**item) if isinstance(item, dict) else item
+            for item in cached_result
+        ]
+    async with httpx.AsyncClient(
+        headers=headers, follow_redirects=True, timeout=10
+    ) as client:
         r = await client.get(url)
 
         if r.status_code != 200:
@@ -63,11 +71,15 @@ async def fetch_rss_feed(url: str, source: str) -> List[RSSArticle]:
             for entry in feed.entries
         ]
 
-        await set_cache(url, [asdict(article) for article in articles])
-
+        await set_cache(
+            build_cache_key("fetch_rss_feed", (url, source), {}),
+            articles,
+            ttl=3600,
+        )
         return articles
 
 
+@logit
 async def fetch_all_feeds(urls, source):
     results = await asyncio.gather(
         *(fetch_rss_feed(url, source) for url in urls),
@@ -84,25 +96,3 @@ async def fetch_all_feeds(urls, source):
         articles.extend(cast(list[RSSArticle], result))
 
     return articles
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    data = asyncio.run(
-        fetch_rss_feed(
-            "https://reddit.com/r/programming/.rss",
-            source="reddit",
-        )
-    )
-    if data:
-        data = data[0]
-        print("title:", data.title)
-        print()
-        print("link:", data.link)
-        print()
-        print("description:", data.description)
-        print()
-        print("publication_date:", data.publication_date)
-        print()
-        print("source:", data.source)

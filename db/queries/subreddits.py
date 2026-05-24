@@ -1,11 +1,14 @@
 import logging
 
+from core.decorators import cached, logit
 from db.postgres import Postgres
 
 db = Postgres()
 logger = logging.getLogger(__name__)
 
 
+@logit
+@cached()
 async def get_subreddits(embedding: list[float], limit: int = 5) -> list[dict]:
     query = """
         SELECT
