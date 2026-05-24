@@ -42,6 +42,9 @@ async def google_news_node(state: LensState) -> dict:
 
         return {
             "google_articles": all_articles,
+            "google_meta": {
+                "article_count": len(all_articles),
+            },
         }
 
     except Exception as e:

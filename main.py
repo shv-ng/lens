@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from api.routes import router
+from api.sse import router as sse_router
 from config.logging_config import setup_logging
 from db.postgres import Postgres
 
@@ -31,3 +32,4 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(router)
+app.include_router(sse_router)

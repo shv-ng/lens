@@ -44,6 +44,10 @@ async def reddit_node(state: LensState) -> dict:
 
         return {
             "reddit_articles": [asdict(article) for article in articles],
+            "reddit_meta": {
+                "article_count": len(articles),
+                "subreddit_count": len(subs),
+            },
         }
 
     except Exception as e:

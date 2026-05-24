@@ -57,6 +57,10 @@ async def conflict_detector_node(state: LensState) -> dict:
         "has_conflict": result.has_conflict,
         "conflicting_articles": conflicting,
         "deep_dive_count": 0,
+        "conflict_meta": {
+            "conflict": result.has_conflict,
+            "conflicting_count": len(conflicting),
+        },
     }
 
 

@@ -86,7 +86,13 @@ async def merge_rerank_node(state: LensState) -> dict:
 
     top = [{**a, "score": s} for s, a in scored[:10]]
 
-    return {"top_articles": top}
+    return {
+        "top_articles": top,
+        "merge_meta": {
+            "merged_count": len(deduped),
+            "top_count": len(top),
+        },
+    }
 
 
 if __name__ == "__main__":

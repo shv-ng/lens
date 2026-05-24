@@ -41,6 +41,9 @@ async def query_extractor_node(state: LensState):
 
         return {
             "queries": queries,
+            "query_meta": {
+                "query_count": len(queries),
+            },
         }
 
     except Exception as e:

@@ -5,18 +5,18 @@ import asyncpg
 
 logger = logging.getLogger(__name__)
 
-conn_string = os.environ.get("POSTGRES_URL")
-
-if not conn_string:
-    ValueError("POSTGRES_URL not set in .env file")
-
 
 class Postgres:
     pool: asyncpg.Pool | None = None
 
     @classmethod
     async def connect(cls):
+
         if not cls.pool:
+            conn_string = os.environ.get("POSTGRES_URL")
+            if not conn_string:
+                ValueError("POSTGRES_URL not set in .env file")
+
             cls.pool = await asyncpg.create_pool(
                 conn_string,
                 min_size=1,

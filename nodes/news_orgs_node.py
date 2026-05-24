@@ -90,6 +90,9 @@ async def news_orgs_node(state: LensState, **kwargs):
 
         return {
             "news_org_articles": all_articles,
+            "news_orgs_meta": {
+                "article_count": len(all_articles),
+            },
         }
 
     except Exception as e:
