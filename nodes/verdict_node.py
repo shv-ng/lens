@@ -1,10 +1,8 @@
 import logging
 
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
+from langchain_core.prompts import (ChatPromptTemplate,
+                                    HumanMessagePromptTemplate,
+                                    SystemMessagePromptTemplate)
 
 from llm.client import get_llm
 from llm.prompts.verdict import SYSTEM_PROMPT

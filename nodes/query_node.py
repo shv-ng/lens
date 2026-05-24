@@ -1,11 +1,9 @@
 import logging
 from typing import cast
 
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
+from langchain_core.prompts import (ChatPromptTemplate,
+                                    HumanMessagePromptTemplate,
+                                    SystemMessagePromptTemplate)
 
 from llm.client import get_llm
 from llm.prompts.query import SYSTEM_PROMPT

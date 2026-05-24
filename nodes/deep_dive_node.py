@@ -4,11 +4,9 @@ from dataclasses import asdict
 from typing import cast
 from urllib.parse import quote_plus
 
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
+from langchain_core.prompts import (ChatPromptTemplate,
+                                    HumanMessagePromptTemplate,
+                                    SystemMessagePromptTemplate)
 
 from llm.client import get_llm
 from llm.prompts.deep_dive import SYSTEM_PROMPT
