@@ -18,7 +18,6 @@ async def get_subreddits(embedding: list[float], limit: int = 5) -> list[dict]:
     """
 
     vector = f"[{','.join(map(str, embedding))}]"
-    logger.info(f"Subreddit query: {query}")
 
     pool = await db.get_connection()
 

@@ -18,6 +18,7 @@ dependencies = [
     "opencv-python>=4.13.0.92",
     "pgvector>=0.4.2",
     "psycopg2-binary>=2.9.12",
+    "pymupdf>=1.27.2.3",
     "pytesseract>=0.3.13",
     "python-dotenv>=1.2.2",
     "redis>=7.4.0",

@@ -21,7 +21,9 @@ async def conflict_detector_node(state: LensState) -> dict:
     prompt = ChatPromptTemplate.from_messages(
         [
             SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
-            HumanMessagePromptTemplate.from_template(""" {articles}"""),
+            HumanMessagePromptTemplate.from_template(
+                """ Raw input: {raw_input}\n\n Articles: {articles}"""
+            ),
         ]
     )
     chain = prompt | llm
@@ -44,6 +46,7 @@ async def conflict_detector_node(state: LensState) -> dict:
         ConflictOutput,
         await chain.ainvoke(
             {
+                "raw_input": state["raw_input"],
                 "articles": compact,
             }
         ),
@@ -56,7 +59,7 @@ async def conflict_detector_node(state: LensState) -> dict:
     return {
         "has_conflict": result.has_conflict,
         "conflicting_articles": conflicting,
-        "deep_dive_count": 0,
+        "deep_dive_count": state.get("deep_dive_count", 0),
         "conflict_meta": {
             "conflict": result.has_conflict,
             "conflicting_count": len(conflicting),

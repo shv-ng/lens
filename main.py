@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from api.routes import router
 from api.sse import router as sse_router
 from config.logging_config import setup_logging
 from db.postgres import Postgres
@@ -48,5 +47,4 @@ async def global_exception_handler(
     )
 
 
-app.include_router(router)
 app.include_router(sse_router)

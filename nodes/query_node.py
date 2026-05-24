@@ -26,6 +26,14 @@ async def query_extractor_node(state: LensState):
     )
     chain = prompt | llm
     raw_input = state["raw_input"]
+    if not raw_input.strip():
+        return {
+            "queries": [],
+            "query_meta": {
+                "query_count": 0,
+            },
+            "error": "No input provided",
+        }
 
     try:
         response = cast(
@@ -37,7 +45,7 @@ async def query_extractor_node(state: LensState):
             ),
         )
         queries = [k.strip() for k in response.queries if k.strip()]
-        logger.info(f"Query extracted: {len(queries)}")
+        logger.info(f"Query extracted: {queries}")
 
         return {
             "queries": queries,
