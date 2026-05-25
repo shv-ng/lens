@@ -67,7 +67,6 @@ async def fetch_for_query(query: str) -> list[dict]:
 
 
 @logit
-@cached()
 async def google_news_node(state: LensState) -> dict:
     queries = state["queries"]
 

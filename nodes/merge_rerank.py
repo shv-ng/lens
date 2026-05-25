@@ -13,7 +13,6 @@ from .state import LensState
 logger = logging.getLogger(__name__)
 
 
-@logit
 def parse_date(x):
     try:
         # RSS often RFC822; adjust if needed
@@ -24,7 +23,6 @@ def parse_date(x):
         return None
 
 
-@logit
 def recency_score(dt):
     if not dt:
         return 0.0
@@ -34,7 +32,6 @@ def recency_score(dt):
     return math.exp(-age_hours / 48)
 
 
-@logit
 def cosine_sim(q, D):
     q = np.array(q)
     D = np.array(D)
@@ -46,7 +43,6 @@ def cosine_sim(q, D):
 
 
 @logit
-@cached()
 async def merge_rerank_node(state: LensState) -> dict:
     queries = state["queries"]
 

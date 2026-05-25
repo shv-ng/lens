@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 @logit
-@cached()
 async def reddit_node(state: LensState) -> dict:
     queries = state["queries"]
     REDDIT_URLS = {"https://www.reddit.com/r/skeptic/.rss"}

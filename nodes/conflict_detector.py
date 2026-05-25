@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 @logit
-@cached()
 async def conflict_detector_node(state: LensState) -> dict:
     try:
         llm = get_llm().with_structured_output(ConflictOutput)

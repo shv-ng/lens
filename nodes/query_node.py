@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 @logit
-@cached()
 async def query_extractor_node(state: LensState):
     try:
         llm = get_llm().with_structured_output(QueriesOutput)

@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 @logit
-@cached()
 async def deep_dive_node(state: LensState) -> dict:
     current_dive_count = state.get("deep_dive_count", 0)
 

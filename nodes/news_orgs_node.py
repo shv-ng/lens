@@ -61,7 +61,6 @@ async def get_all_feeds():
 
 
 @logit
-@cached()
 async def news_orgs_node(state: LensState):
     all_articles = []
     seen_links = set()
