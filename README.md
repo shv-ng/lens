@@ -314,4 +314,4 @@ lens/
 
 ## 📜 License
 
-MIT
+[MIT](LICENSE)
