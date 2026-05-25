@@ -130,8 +130,6 @@ The conflict detector is explicitly designed to catch three distinct failure mod
 - **Inter-source factual conflict**: two sources contradict each other on facts
 - **Framing divergence**: same facts, but different source types tell different stories
 
-Most fact-checking tools only catch type 2. Types 1 and 3 are often more important in Indian news contexts.
-
 **6. SSE over WebSockets**
 Server-Sent Events are simpler, stateless, and sufficient for a unidirectional server → client stream.
 
