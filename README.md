@@ -16,11 +16,12 @@ We live in an era of information overload where the same event gets reported wit
 
 It retrieves live news coverage from multiple source types (Google News, mainstream Indian and international media RSS feeds, semantically relevant Reddit communities), detects narrative conflicts using an LLM, runs targeted deep-dive re-retrieval when conflicts are found, and synthesizes a final verdict — all streamed to the frontend in real time via SSE.
 
+
 ---
 
 ## 🎬 Demo Video
 
-📽️ [Watch Demo](#)
+📽️ [Watch Demo](https://drive.google.com/file/d/1xq37uAqMUWZ6NQMgfUQoapfpZ14F2ty0/view?usp=drivesdk)
 
 ---
 
@@ -60,6 +61,7 @@ It retrieves live news coverage from multiple source types (Google News, mainstr
 
 
 </details>
+
 ---
 
 ## 🏗️ System Architecture
@@ -67,45 +69,7 @@ It retrieves live news coverage from multiple source types (Google News, mainstr
 <details>
 <summary>View architecture diagram & state design</summary>
 
-```
-User Input (text / PDF / image)
-          │
-          ▼
-    [ Query Node ]
-    LLM generates 6 queries across:
-    factual · comparative · critical
-    causal · impact · historical
-          │
-    ┌─────┼──────┐
-    ▼     ▼      ▼
-[Google [News  [Reddit
- News]  Orgs]   Node]
-  RSS    RSS   pgvector
-  (3    (The   subreddit
-locales) Hindu  discovery
-         IE/ANI
-         BBC)
-    └─────┼──────┘
-          ▼
-  [ Merge & Rerank ]
-  dedupe → embed → 0.5×cosine + 0.5×recency → top 20
-          │
-          ▼
-  [ Conflict Detector ]
-  LLM checks: user vs articles · source vs source · framing
-          │
-     has_conflict AND deep_dive_count < 2?
-     ┌────┴────┐
-    YES        NO
-     ▼          ▼
-[ Deep Dive ]  [ Verdict ]
-  LLM generates    │
-  2–3 targeted     ▼
-  queries        [ END ]
-  re-fetch
-  loop back ↑
-  (max 2×)
-```
+![Architecture diagram](architecture.png)
 
 **State** is a typed `TypedDict` (`LensState`) shared across all LangGraph nodes. Each node reads only what it needs and writes only its own keys — making every node independently testable.
 
