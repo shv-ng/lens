@@ -64,7 +64,7 @@ services:
       - .env
     environment:
       - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/postgres
-    command: ["uv", "run", "python", "scripts/seed_reddit_subs.py"]
+    command: ["uv", "run", "-m", "scripts.seed_reddit_subs"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,7 +79,7 @@ services:
       - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/postgres
     volumes:
       - model_cache:/app/models
-    command: ["uv", "run", "python", "scripts/embed_subreddits.py"]
+    command: ["uv", "run", "-m", "scripts.embed_subreddits"]
     depends_on:
       postgres:
         condition: service_healthy

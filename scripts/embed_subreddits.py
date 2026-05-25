@@ -79,4 +79,6 @@ async def backfill_subreddit_embeddings():
 
 
 if __name__ == "__main__":
-    backfill_subreddit_embeddings()
+    import asyncio
+
+    asyncio.run(backfill_subreddit_embeddings())
