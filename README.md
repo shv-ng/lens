@@ -41,6 +41,10 @@ It retrieves live news coverage from multiple source types (Google News, mainstr
 
 ## 🛠️ Tech Stack
 
+<details>
+    <summary>View full tech stack diagram</summary>
+
+
 | Layer | Technology | Why |
 |---|---|---|
 | Backend framework | FastAPI | Async-native, SSE support, clean routing |
@@ -54,6 +58,8 @@ It retrieves live news coverage from multiple source types (Google News, mainstr
 | OCR | Tesseract + OpenCV | Open source, good accuracy with preprocessing |
 | PDF extraction | PyMuPDF | Fast, handles OCR fallback for scanned PDFs |
 
+
+</details>
 ---
 
 ## 🏗️ System Architecture
@@ -216,9 +222,6 @@ Open [http://localhost](http://localhost).
 
 ### 4. Seed data (one-time only)
 
-<details>
-<summary>What this does and why it's required</summary>
-
 Run these in order before first use:
 
 ```bash
@@ -229,8 +232,6 @@ docker compose --profile scripts run --rm embed
 The `seed` script fetches 5,000+ popular subreddits from Reddit and bulk-inserts them into Postgres. The `embed` script backfills pgvector embeddings for each subreddit description in batches of 256 using the local FastEmbed model. Both are safe to re-run but only need to run once.
 
 Python, Node, and all database setup are handled by Docker — no local installs required.
-
-</details>
 
 ---
 
