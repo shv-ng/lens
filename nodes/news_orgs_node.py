@@ -2,7 +2,7 @@ import asyncio
 import logging
 from dataclasses import asdict
 
-from core.decorators import cached, logit
+from core.decorators import logit
 from tools.rss_fetcher import RSSArticle, fetch_all_feeds
 
 from .state import LensState

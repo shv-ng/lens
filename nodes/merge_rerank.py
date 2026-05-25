@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-from core.decorators import cached, logit
+from core.decorators import logit
 from tools.embedder import get_embeddings
 
 from .state import LensState

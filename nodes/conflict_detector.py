@@ -7,7 +7,7 @@ from langchain_core.prompts import (
     SystemMessagePromptTemplate,
 )
 
-from core.decorators import cached, logit
+from core.decorators import logit
 from llm.client import get_llm
 from llm.prompts.conflict import SYSTEM_PROMPT
 from llm.schemas.conflict import ConflictOutput

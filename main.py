@@ -61,6 +61,7 @@ async def global_exception_handler(
 
 app.include_router(sse_router)
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}

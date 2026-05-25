@@ -2,7 +2,7 @@ import asyncio
 import logging
 from dataclasses import asdict
 
-from core.decorators import cached, logit
+from core.decorators import logit
 from db.queries.subreddits import get_subreddits
 from tools.embedder import get_embeddings
 from tools.rss_fetcher import fetch_all_feeds
