@@ -1,17 +1,91 @@
 services:
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
   postgres:
     image: pgvector/pgvector:pg18-trixie
-    restart: always
-    ports:
-      - "5432:5432"
     env_file:
       - .env
     volumes:
       - pgdata:/var/lib/postgresql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/postgres
+    volumes:
+      - model_cache:/app/models
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        PUBLIC_API_BASE_URL: ""
+    ports:
+      - "80:80"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  seed:
+    build: .
+    profiles: ["scripts"]
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/postgres
+    command: ["uv", "run", "python", "scripts/seed_reddit_subs.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  embed:
+    build: .
+    profiles: ["scripts"]
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/postgres
+    volumes:
+      - model_cache:/app/models
+    command: ["uv", "run", "python", "scripts/embed_subreddits.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
 volumes:
   pgdata:
+  model_cache:
+  redis_data:
