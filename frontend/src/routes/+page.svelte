@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Paperclip, Search, Check, Loader2 } from 'lucide-svelte';
+	import { Paperclip, Search, Check, Loader2 } from '@lucide/svelte';
+  import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
 	let inputText = $state('');
 	let attachedFile: File | null = $state(null);
@@ -20,6 +21,21 @@
 	);
 	let activeNode = $derived(isLoading ? progressEvents[progressEvents.length - 1]?.node.split(' ')[0] : null);
 	let justCompletedNode: string | null = $state(null);
+	let isBackendActive = $state(true);
+
+	$effect(() => {
+		const checkHealth = async () => {
+			try {
+				const res = await fetch(`/api/health`);
+				isBackendActive = res.ok;
+			} catch {
+				isBackendActive = false;
+			}
+		};
+		checkHealth();
+		const interval = setInterval(checkHealth, 5000);
+		return () => clearInterval(interval);
+	});
 
 	$effect(() => {
 		if (activeNode === null && progressEvents.length > 0) {
@@ -70,7 +86,7 @@
 		}
 
 		try {
-			const response = await fetch('http://localhost:8000/verify/stream', {
+			const response = await fetch(`/api/verify/stream`, {
 				method: 'POST',
 				headers,
 				body
@@ -171,6 +187,9 @@
 		<div class="flex items-center gap-3">
 			<h1 class="text-xl font-bold text-white">Lens</h1>
 			<span class="text-sm text-zinc-400">News Verification System</span>
+		</div>
+		<div class="ml-auto text-sm font-medium {isBackendActive ? 'text-emerald-400' : 'text-red-500'}">
+			{isBackendActive ? 'Active' : 'Inactive'}
 		</div>
 	</header>
 
